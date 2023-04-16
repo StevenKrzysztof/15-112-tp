@@ -2,9 +2,9 @@ from cmu_graphics import *
 from PIL import Image
 import random, time
 
-class Kirb:
+class Bee:
     def __init__(self):
-        #Load the kirb gif
+        #Load the bee gif
         myGif = Image.open('D:/CMU/semester2/15-112/term_project/giphy.gif')
         self.spriteList = []
         for frame in range(myGif.n_frames):  #For every frame index...
@@ -28,7 +28,7 @@ class Kirb:
         self.ddy = .1
 
     def draw(self,app):
-        #Draw current kirb sprite
+        #Draw current bee sprite
         drawImage(self.spriteList[self.spriteCounter], 
                   self.x, self.y, align = 'center')
         if app.pollinated != False:
@@ -40,17 +40,12 @@ class Kirb:
             self.spriteCounter = (self.spriteCounter + 1) % len(self.spriteList)
             self.stepCounter = 0
 
-        #Update position and velocity
-        # self.y += self.dy
-        # self.dy += self.ddy
-
-        #Don't let your pal down
+        
         if self.y >= 550:
             self.y = 550
             self.dy = 0
 
-    def flap(self):
-        self.dy = -3
+
 
     def isColliding(self, orbs,app):
         for orb in orbs:
@@ -61,9 +56,10 @@ class Kirb:
 
 
 #-------------------------------------------------------------------
+#The helperBee is clumsy
 class helperBee:
     def __init__(self,app):
-        #Load the kirb gif
+        #Load the bee gif
         myGif = Image.open('D:/CMU/semester2/15-112/term_project/giphy.gif')
         self.spriteList = []
         for frame in range(myGif.n_frames):  #For every frame index...
@@ -82,16 +78,16 @@ class helperBee:
         self.spriteCounter = 0
 
         #Set initial position, velocity, acceleration
-        self.x, self.y = 250,250
+        self.x, self.y = 500,500
         self.dy = 0
         self.ddy = .1
 
     def draw(self,app):
-        #Draw current kirb sprite
+        #Draw current bee sprite
         drawImage(self.spriteList[self.spriteCounter], 
                   self.x, self.y, align = 'center')
-        if app.pollinated != False:
-            drawCircle(self.x-18, self.y+45, 12, fill = 'black', opacity = 75)
+        if app.pollinated1 != False:
+            drawCircle(self.x-18, self.y+45, 12, fill = 'orange', opacity = 75)
         
     def doStep(self):
         self.stepCounter += 1
@@ -124,16 +120,22 @@ class Orb:
         self.r = random.randrange(10, 50)
         self.color = random.choice(['red', 'yellow', 'blue'])
         self.max_size = self.r * 1.5
-        self.growth_rate = 1
+        self.growth_rate = 0.2
         self.pollinated = False
         self.needToDraw = False
         self.pollinateCount = 0
+        self.immature =False
 
     def doStep(self):
         self.y += self.dy
+        if self.r <= self.max_size:
+            self.r += self.growth_rate
         #self.x += random.randrange(-2,2) * self.dx
 
     def draw(self,app):
+        if self.immature == True:
+            drawCircle(self.x, self.y, self.r, fill = self.color, opacity = 75)
+            drawLabel("immature", self.x, self.y, size = 8)
         if self.needToDraw == False:
             drawCircle(self.x, self.y, self.r, fill = self.color, opacity = 75)
         elif self.needToDraw == True:
@@ -149,15 +151,17 @@ class Orb:
         return self.y >0 and self.y < app.height
     
     def pollination(self, bee):
-        if ((self.x - bee.x)**2 + (self.y - bee.y)**2)**0.5 < self.r+5:
+        if self.r >=30:
+            if ((self.x - bee.x)**2 + (self.y - bee.y)**2)**0.5 < self.r+5:
+                
+                return True
             
-            return True
-        return False
+        else:
+            if self.max_size<30:
+                self.immature = True
+            return False
         
-    
-    def checkMaxSize(self):
-        if self.r < self.max_size:
-            self.r += self.growth_rate
+
 
 #-------------------------------------------------------------------
 def onAppStart(app):
@@ -167,7 +171,7 @@ def restart(app):
     app.gameOver = False
     app.paused = False
     app.stepsPerSecond = 50
-    app.kirb = Kirb()
+    app.bee = Bee()
     app.helperBee = helperBee(app)
     app.orbs = []
     app.pollinatedOrbs = []
@@ -176,6 +180,7 @@ def restart(app):
     app.label = ''
     app.pollinateCount = 0
     app.pollinated = False
+    app.pollinated1 = False
     app.helperShow = False
     app.needToDraw = False
 
@@ -183,12 +188,12 @@ def restart(app):
     
 def onStep(app):
     if app.paused == False and app.gameOver == False:
-    #Update the kirb
+    
         takeStep(app)
         
 
 def takeStep(app):
-    app.kirb.doStep()
+    app.bee.doStep()
     if app.helperShow == True:
         app.helperBee.doStep()
     i = 0
@@ -204,7 +209,20 @@ def takeStep(app):
             if app.score >= 1 and app.score<=10:
                 app.helperShow = True
         
-        if orb.pollination(app.kirb) or orb.pollination(app.helperBee):
+        if orb.pollination(app.bee):
+            # app.pollinateCount += 0.05
+            # totalCount = int(app.pollinateCount//1)
+            orb.pollinateCount += 0.1
+            totalCount = int(orb.pollinateCount//1)
+            if totalCount >=1:
+                totalCount = 1
+                orb.needToDraw = True
+                app.pollinated = True
+            app.pollinateCount += totalCount
+            app.orbPollinated = True
+            app.label = f'You have pollinate {app.pollinateCount} times'
+
+        if orb.pollination(app.helperBee):
             # app.pollinateCount += 0.05
             # totalCount = int(app.pollinateCount//1)
             orb.pollinateCount += 0.05
@@ -212,12 +230,13 @@ def takeStep(app):
             if totalCount >=1:
                 totalCount = 1
                 orb.needToDraw = True
+                app.pollinated1 = True
             app.pollinateCount += totalCount
             app.orbPollinated = True
-            app.label = f'You have pollinate {app.pollinateCount} times'
+            
             
 
-        if app.kirb.isColliding(app.orbs,app) or app.helperBee.isColliding(app.orbs, app):
+        if app.bee.isColliding(app.orbs,app) or app.helperBee.isColliding(app.orbs, app):
             app.pollinated = True
             
             
@@ -230,31 +249,27 @@ def takeStep(app):
         app.orbs.append(Orb(app))
         app.lastOrbTime = time.time()
 
-    if app.kirb.y > app.height or app.kirb.y < 0 or app.kirb.x > app.width or app.kirb.x < 0:
+    if app.bee.y > app.height or app.bee.y < 0 or app.bee.x > app.width or app.bee.x < 0:
         app.gameOver = True
 
         app.label = 'Game over you dumb'
-    # if app.kirb.isColliding(app.orbs,app) or app.helperBee.isColliding(app.orbs, app):
-    #     app.pollinated = True
-    #     app.pollinateCount += 1
-    #     app.label = f'You have pollinate {app.pollinateCount} times'
+  
 
 def onMouseMove(app, mouseX, mouseY):
     # This is called when the user moves the mouse
     # while it is not pressed:
     if app.gameOver == False:
-        app.kirb.x = mouseX
-        app.kirb.y = mouseY
+        app.bee.x = mouseX
+        app.bee.y = mouseY
 
 def onKeyPress(app, key):
-    #Flappy kirb!
-    #app.kirb.flap()
+    
     if key == 'r':
         restart(app)
     elif key =='p':
         app.paused = not app.paused
     else:
-        app.kirb.flap()
+        app.bee.flap()
 
 def redrawAll(app):
     #new BG of garden gif
@@ -276,15 +291,15 @@ def redrawAll(app):
     spriteCounter = 0
 
 
-    #Draw current kirb sprite
+    #Draw current bee sprite
     drawImage(spriteList[spriteCounter], 
                 200, 300, align = 'center')
     #Background
     #drawRect(0, 0, app.width, app.height, fill='lightGreen')
     drawLabel(app.label, 200, 10, size = 12)
     drawLabel(f"Your score is: {app.score}", 200, 25, size = 12)
-    #Call kirb's draw method
-    app.kirb.draw(app)
+    #Call bee's draw method
+    app.bee.draw(app)
     if app.helperShow == True:
         app.helperBee.draw(app)
 
