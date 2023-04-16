@@ -56,7 +56,7 @@ class Kirb:
         for orb in orbs:
             if ((self.x - orb.x)**2 + (self.y - orb.y)**2)**0.5 < orb.r+5:
                 orb.pollinated = True
-                return True
+                #return True
             return False
 
 
@@ -95,7 +95,7 @@ class helperBee:
         
     def doStep(self):
         self.stepCounter += 1
-        if self.stepCounter >= 2: #Update the sprite every 10th call
+        if self.stepCounter >= 2000: #Update the sprite every 10th call
             self.spriteCounter = (self.spriteCounter + 1) % len(self.spriteList)
             self.stepCounter = 0
 
@@ -126,15 +126,17 @@ class Orb:
         self.max_size = self.r * 1.5
         self.growth_rate = 1
         self.pollinated = False
+        self.needToDraw = False
+        self.pollinateCount = 0
 
     def doStep(self):
         self.y += self.dy
         #self.x += random.randrange(-2,2) * self.dx
 
     def draw(self,app):
-        if self.pollinated == False:
+        if self.needToDraw == False:
             drawCircle(self.x, self.y, self.r, fill = self.color, opacity = 75)
-        else:
+        elif self.needToDraw == True:
             drawCircle(self.x, self.y, self.r, fill = self.color, opacity = 75)
             drawCircle(self.x, self.y, (self.r)//2, fill = 'white', opacity = 75)
 
@@ -145,6 +147,13 @@ class Orb:
         return self.y > app.height
     def comesOut(self, app):
         return self.y >0 and self.y < app.height
+    
+    def pollination(self, bee):
+        if ((self.x - bee.x)**2 + (self.y - bee.y)**2)**0.5 < self.r+5:
+            
+            return True
+        return False
+        
     
     def checkMaxSize(self):
         if self.r < self.max_size:
@@ -161,12 +170,14 @@ def restart(app):
     app.kirb = Kirb()
     app.helperBee = helperBee(app)
     app.orbs = []
+    app.pollinatedOrbs = []
     app.lastOrbTime = time.time()
     app.score = 0
     app.label = ''
     app.pollinateCount = 0
     app.pollinated = False
     app.helperShow = False
+    app.needToDraw = False
 
     
     
@@ -186,26 +197,31 @@ def takeStep(app):
     while i < len(app.orbs):
         orb = app.orbs[i]
         orb.doStep()
-        # if orb.offLeftEdge():
-        #     app.orbs.pop(i)
-        #     #print('pop')
-        #     app.score += 1
-        # if orb.comesOut(app):
-        #     app.pollinated = False
         if orb.offBottomEdge(app):
             app.orbs.pop(i)
             print('pop')
             app.score += 1
+            if app.score >= 1 and app.score<=10:
+                app.helperShow = True
+        
+        if orb.pollination(app.kirb) or orb.pollination(app.helperBee):
+            # app.pollinateCount += 0.05
+            # totalCount = int(app.pollinateCount//1)
+            orb.pollinateCount += 0.05
+            totalCount = int(orb.pollinateCount//1)
+            if totalCount >=1:
+                totalCount = 1
+                orb.needToDraw = True
+            app.pollinateCount += totalCount
+            app.orbPollinated = True
+            app.label = f'You have pollinate {app.pollinateCount} times'
             
-                
-            
-            #app.pollinated = False
+
         if app.kirb.isColliding(app.orbs,app) or app.helperBee.isColliding(app.orbs, app):
             app.pollinated = True
-            app.pollinateCount += 1
-            if app.pollinateCount >= 1:
-                app.helperShow = True
-            app.label = f'You have pollinate {app.pollinateCount} times'
+            
+            
+           
         else:
             i += 1
             
@@ -216,7 +232,7 @@ def takeStep(app):
 
     if app.kirb.y > app.height or app.kirb.y < 0 or app.kirb.x > app.width or app.kirb.x < 0:
         app.gameOver = True
-    #     app.pollinated = True
+
         app.label = 'Game over you dumb'
     # if app.kirb.isColliding(app.orbs,app) or app.helperBee.isColliding(app.orbs, app):
     #     app.pollinated = True
@@ -274,6 +290,8 @@ def redrawAll(app):
 
     #Call each orb's draw method
     for orb in app.orbs:
+        orb.draw(app)
+    for orb in app.pollinatedOrbs:
         orb.draw(app)
     
 #Change width and height to suit your needs    
