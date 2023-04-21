@@ -44,7 +44,7 @@ class Bee:
         dist = math.sqrt((self.x - app.mousePosX)**2 + (self.y - app.mousePosY)**2)
 
         # Set the bee's speed to be proportional to the distance
-        self.speed += dist / 10000
+        self.speed += dist / 50000
 
         # Limit the bee's speed to a maximum of 10
         if self.speed > 10:
@@ -59,16 +59,27 @@ class Bee:
         if dist > 5:
             dx /= dist
             dy /= dist
-            self.donotMove = False
-        else:
-            self.donotMove = True
+        #     self.donotMove = False
+        # else:
+        #     self.donotMove = True
 
 
         # Update the bee's position
         self.x += dx * self.speed
         self.y += dy * self.speed
+
+
+        # Increase the speed of the bee's animation as its speed increases
+        if self.speed < 1:
+            stepsPerSprite = 10*2
+        elif self.speed < 2:
+            stepsPerSprite = 8
+        elif self.speed < 4:
+            stepsPerSprite = 6/2
+        else:
+            stepsPerSprite = 4/2
         self.stepCounter += 1
-        if self.stepCounter >= 10: #Update the sprite every 10th call
+        if self.stepCounter >= stepsPerSprite: #Update the sprite every Nth call
             self.spriteCounter = (self.spriteCounter + 1) % len(self.spriteList)
             self.stepCounter = 0
 
@@ -274,8 +285,8 @@ def restart(app):
     app.helperShow = False
     app.needToDraw = False
     app.pollen = Pollen()
-    app.mousePosX = 500
-    app.mousePosY = 500
+    app.mousePosX = 100
+    app.mousePosY = 100
 
     
     
@@ -288,7 +299,8 @@ def onKeyPress(app):
     if app.key =='p':
         app.paused = not app.paused
 def takeStep(app):
-    if app.bee.donotMove == False:
+    dist = math.sqrt((app.bee.x - app.mousePosX)**2 + (app.bee.y - app.mousePosY)**2)
+    if dist > 5:
         app.bee.doStep(app)
     if app.helperShow == True:
         app.helperBee.doStep()
