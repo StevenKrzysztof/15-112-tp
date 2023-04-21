@@ -4,6 +4,8 @@ import random, time
 
 class Bee:
     def __init__(self):
+        #Load the frame
+        
         #Load the bee gif
         myGif = Image.open('D:/CMU/semester2/15-112/term_project/giphy.gif')
         self.spriteList = []
@@ -31,8 +33,8 @@ class Bee:
         #Draw current bee sprite
         drawImage(self.spriteList[self.spriteCounter], 
                   self.x, self.y, align = 'center')
-        if app.pollinated != False:
-            drawCircle(self.x-18, self.y+45, 12, fill = 'black', opacity = 75)
+        # if app.pollinated != False:
+        #     drawCircle(self.x-18, self.y+45, 12, fill = 'black', opacity = 75)
         
     def doStep(self):
         self.stepCounter += 1
@@ -79,7 +81,9 @@ class helperBee:
 
         #Set initial position, velocity, acceleration
         self.x, self.y = 500,500
-        self.dy = 0
+        self.dy = random.randrange(-5,5)
+        self.dx = random.randrange(-5,5)
+
         self.ddy = .1
 
     def draw(self,app):
@@ -90,16 +94,19 @@ class helperBee:
             drawCircle(self.x-18, self.y+45, 12, fill = 'orange', opacity = 75)
         
     def doStep(self):
+        self.y += self.dy
+        self.x += self.dx
+        if self.x <= 0 or self.x >= 600:
+            self.dx = -1*self.dx
+        if self.y <= 0 or self.y >= 600:
+            self.dy = -1*self.dy
         self.stepCounter += 1
         if self.stepCounter >= 2000: #Update the sprite every 10th call
             self.spriteCounter = (self.spriteCounter + 1) % len(self.spriteList)
             self.stepCounter = 0
 
         #Update position and velocity
-        self.y += random.randrange(-10,10)
-        self.x += random.randrange(-10,10)
-
-        #Don't let your pal down
+    
 
 
 
@@ -115,9 +122,10 @@ class Orb:
     def __init__(self, app):
         self.x = random.randrange(app.width)
         self.y = 0
-        self.dy = random.randrange(2, 5)
-        self.dx = random.randrange(3, 4)
-        self.r = random.randrange(10, 50)
+        self.dy = random.randrange(2, 4)
+        self.dx = random.randrange(-3, 3)
+        
+        self.r = random.randrange(10, 35)
         self.color = random.choice(['red', 'yellow', 'blue'])
         self.max_size = self.r * 1.5
         self.growth_rate = 0.2
@@ -125,22 +133,34 @@ class Orb:
         self.needToDraw = False
         self.pollinateCount = 0
         self.immature =False
+        self.needToDrawAgain = False
+        self.pollenDraw = False
 
     def doStep(self):
         self.y += self.dy
+        self.x += self.dx
+        if self.x <= 0 or self.x >= 600:
+            self.dx = -1*self.dx
         if self.r <= self.max_size:
             self.r += self.growth_rate
         #self.x += random.randrange(-2,2) * self.dx
 
     def draw(self,app):
         if self.immature == True:
-            drawCircle(self.x, self.y, self.r, fill = self.color, opacity = 75)
+            drawCircle(self.x, self.y, (self.r)//2, fill = 'green')
+            drawCircle(self.x, self.y, self.r, fill = self.color, opacity = 25)
+            
             drawLabel("immature", self.x, self.y, size = 8)
-        if self.needToDraw == False:
+        if self.needToDraw == False and self.needToDrawAgain == False:
             drawCircle(self.x, self.y, self.r, fill = self.color, opacity = 75)
+        elif self.needToDraw == False and self.needToDrawAgain == True:
+            drawCircle(self.x, self.y, self.r-5, fill = self.color, opacity = 75)
+            drawCircle(self.x, self.y, (self.r-5)//2, fill = 'white', opacity = 75)
+            drawCircle(self.x, self.y, (self.r-5)//4, fill = self.color, opacity = 75)
         elif self.needToDraw == True:
-            drawCircle(self.x, self.y, self.r, fill = self.color, opacity = 75)
-            drawCircle(self.x, self.y, (self.r)//2, fill = 'white', opacity = 75)
+            drawCircle(self.x, self.y, self.r-5, fill = self.color, opacity = 75)
+            drawCircle(self.x, self.y, (self.r-5)//2, fill = 'white', opacity = 75)
+            drawCircle(self.x, self.y, (self.r-5)//4, fill = self.color, opacity = 75)
 
     def offLeftEdge(self):
             return self.x < 0 - self.r
@@ -162,7 +182,47 @@ class Orb:
             return False
         
 
+#-------------------------------------------------------------------
+class Pollen:
+    def __init__(self):
+        self.r = 12
+        self.counter = 0
+        self.colorList = []
+        self.needToDraw = False
 
+
+    def draw(self,bee,orbs):
+        
+            
+        for orb in orbs:
+            if orb.needToDraw == True and orb.needToDrawAgain == False:
+                #color = random.choice(['red', 'yellow', 'blue'])
+                self.colorList.append(orb.color)
+                
+                self.counter += 1
+                orb.needToDraw = False
+                orb.needToDrawAgain = True
+                self.needToDraw = True
+            if self.counter ==1:
+                drawCircle(bee.x-10, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
+            elif self.counter ==2:
+                drawCircle(bee.x-18, bee.y+45, self.r, fill = self.colorList[self.counter-2], opacity = 75)
+                drawCircle(bee.x, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
+            elif self.counter ==3:
+                drawCircle(bee.x-30, bee.y+45, self.r, fill = self.colorList[self.counter-3], opacity = 75)
+                drawCircle(bee.x-10, bee.y+45, self.r, fill = self.colorList[self.counter-2], opacity = 75)
+                drawCircle(bee.x+10, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
+            elif self.counter > 3:
+                drawCircle(bee.x-18, bee.y+45, self.r, fill = self.colorList[self.counter-3], opacity = 75)
+                drawCircle(bee.x-6, bee.y+45, self.r, fill = self.colorList[self.counter-2], opacity = 75)
+                drawCircle(bee.x+6, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
+            for i in range(len(self.colorList)):
+                #if ppollen in trash can
+                drawCircle(100+20*i, 50, 20, fill = self.colorList[i], opacity = 75)
+
+            
+
+        
 #-------------------------------------------------------------------
 def onAppStart(app):
     restart(app)
@@ -183,6 +243,7 @@ def restart(app):
     app.pollinated1 = False
     app.helperShow = False
     app.needToDraw = False
+    app.pollen = Pollen()
 
     
     
@@ -212,15 +273,18 @@ def takeStep(app):
         if orb.pollination(app.bee):
             # app.pollinateCount += 0.05
             # totalCount = int(app.pollinateCount//1)
-            orb.pollinateCount += 0.1
+            orb.pollinateCount += 0.05
             totalCount = int(orb.pollinateCount//1)
             if totalCount >=1:
-                totalCount = 1
+                
                 orb.needToDraw = True
                 app.pollinated = True
+
             app.pollinateCount += totalCount
             app.orbPollinated = True
-            app.label = f'You have pollinate {app.pollinateCount} times'
+            
+            app.label = f'You have pollinate {app.score} times'
+            
 
         if orb.pollination(app.helperBee):
             # app.pollinateCount += 0.05
@@ -272,28 +336,28 @@ def onKeyPress(app, key):
         app.bee.flap()
 
 def redrawAll(app):
-    #new BG of garden gif
-    myBgGif = Image.open('D:/CMU/semester2/15-112/term_project/garden.gif')
-    spriteList = []
-    for frame in range(myBgGif.n_frames):  #For every frame index...
-        #Seek to the frame, convert it, add it to our sprite list
-        myBgGif.seek(frame)
-        fr = myBgGif.resize((myBgGif.size[0] * 2, myBgGif.size[1]*3))
-        fr = fr.transpose(Image.FLIP_LEFT_RIGHT)
-        fr = CMUImage(fr)
-        spriteList.append(fr)
+    # #new BG of garden gif
+    # myBgGif = Image.open('D:/CMU/semester2/15-112/term_project/garden.gif')
+    # spriteList = []
+    # for frame in range(myBgGif.n_frames):  #For every frame index...
+    #     #Seek to the frame, convert it, add it to our sprite list
+    #     myBgGif.seek(frame)
+    #     fr = myBgGif.resize((myBgGif.size[0] * 2, myBgGif.size[1]*3))
+    #     fr = fr.transpose(Image.FLIP_LEFT_RIGHT)
+    #     fr = CMUImage(fr)
+    #     spriteList.append(fr)
 
-    ##Fix for broken transparency on frame 0
-    spriteList.pop(0)
+    # ##Fix for broken transparency on frame 0
+    # spriteList.pop(0)
 
-    #Set sprite counters
+    # #Set sprite counters
     
-    spriteCounter = 0
+    # spriteCounter = 0
 
 
-    #Draw current bee sprite
-    drawImage(spriteList[spriteCounter], 
-                200, 300, align = 'center')
+    # #Draw current bee sprite
+    # drawImage(spriteList[spriteCounter], 
+    #             200, 300, align = 'center')
     #Background
     #drawRect(0, 0, app.width, app.height, fill='lightGreen')
     drawLabel(app.label, 200, 10, size = 12)
@@ -302,6 +366,8 @@ def redrawAll(app):
     app.bee.draw(app)
     if app.helperShow == True:
         app.helperBee.draw(app)
+
+    app.pollen.draw(app.bee,app.orbs)
 
     #Call each orb's draw method
     for orb in app.orbs:
