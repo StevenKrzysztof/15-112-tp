@@ -1,6 +1,7 @@
 from cmu_graphics import *
 from PIL import Image
 import random, time
+import math
 
 class Bee:
     def __init__(self):
@@ -28,6 +29,8 @@ class Bee:
         self.x, self.y = 100, 100
         self.dy = 0
         self.ddy = .1
+        self.speed = 0
+        self.donotMove = False
 
     def draw(self,app):
         #Draw current bee sprite
@@ -36,7 +39,34 @@ class Bee:
         # if app.pollinated != False:
         #     drawCircle(self.x-18, self.y+45, 12, fill = 'black', opacity = 75)
         
-    def doStep(self):
+    def doStep(self,app):
+        # Calculate the distance to the mouse position
+        dist = math.sqrt((self.x - app.mousePosX)**2 + (self.y - app.mousePosY)**2)
+
+        # Set the bee's speed to be proportional to the distance
+        self.speed += dist / 10000
+
+        # Limit the bee's speed to a maximum of 10
+        if self.speed > 10:
+            self.speed = 10
+
+        # Calculate the direction to the mouse position
+        dx = app.mousePosX - self.x
+        dy = app.mousePosY - self.y
+
+        # Normalize the direction vector
+        # length = math.sqrt(dx**2 + dy**2)
+        if dist > 5:
+            dx /= dist
+            dy /= dist
+            self.donotMove = False
+        else:
+            self.donotMove = True
+
+
+        # Update the bee's position
+        self.x += dx * self.speed
+        self.y += dy * self.speed
         self.stepCounter += 1
         if self.stepCounter >= 10: #Update the sprite every 10th call
             self.spriteCounter = (self.spriteCounter + 1) % len(self.spriteList)
@@ -244,6 +274,8 @@ def restart(app):
     app.helperShow = False
     app.needToDraw = False
     app.pollen = Pollen()
+    app.mousePosX = 500
+    app.mousePosY = 500
 
     
     
@@ -252,9 +284,12 @@ def onStep(app):
     
         takeStep(app)
         
-
+def onKeyPress(app):
+    if app.key =='p':
+        app.paused = not app.paused
 def takeStep(app):
-    app.bee.doStep()
+    if app.bee.donotMove == False:
+        app.bee.doStep(app)
     if app.helperShow == True:
         app.helperBee.doStep()
     i = 0
@@ -323,8 +358,8 @@ def onMouseMove(app, mouseX, mouseY):
     # This is called when the user moves the mouse
     # while it is not pressed:
     if app.gameOver == False:
-        app.bee.x = mouseX
-        app.bee.y = mouseY
+        app.mousePosX = mouseX
+        app.mousePosY = mouseY
 
 def onKeyPress(app, key):
     
