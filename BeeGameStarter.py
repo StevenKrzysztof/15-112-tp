@@ -344,22 +344,24 @@ class Pollen:
                 orb.needToDrawAgain = True
                 self.needToDraw = True
             
-            if self.counter ==1:
-                drawCircle(bee.x-10, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
-            elif self.counter ==2:
-                drawCircle(bee.x-18, bee.y+45, self.r, fill = self.colorList[self.counter-2], opacity = 75)
-                drawCircle(bee.x, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
-            elif self.counter ==3:
-                drawCircle(bee.x-30, bee.y+45, self.r, fill = self.colorList[self.counter-3], opacity = 75)
-                drawCircle(bee.x-10, bee.y+45, self.r, fill = self.colorList[self.counter-2], opacity = 75)
-                drawCircle(bee.x+10, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
-            elif self.counter > 3:
-                drawCircle(bee.x-18, bee.y+45, self.r, fill = self.colorList[self.counter-3], opacity = 75)
-                drawCircle(bee.x-6, bee.y+45, self.r, fill = self.colorList[self.counter-2], opacity = 75)
-                drawCircle(bee.x+6, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
+            # if self.counter ==1:
+            #     drawCircle(bee.x-10, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
+            # elif self.counter ==2:
+            #     drawCircle(bee.x-18, bee.y+45, self.r, fill = self.colorList[self.counter-2], opacity = 75)
+            #     drawCircle(bee.x, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
+            # elif self.counter ==3:
+            #     drawCircle(bee.x-30, bee.y+45, self.r, fill = self.colorList[self.counter-3], opacity = 75)
+            #     drawCircle(bee.x-10, bee.y+45, self.r, fill = self.colorList[self.counter-2], opacity = 75)
+            #     drawCircle(bee.x+10, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
+            # elif self.counter > 3:
+            #     drawCircle(bee.x-18, bee.y+45, self.r, fill = self.colorList[self.counter-3], opacity = 75)
+            #     drawCircle(bee.x-6, bee.y+45, self.r, fill = self.colorList[self.counter-2], opacity = 75)
+            #     drawCircle(bee.x+6, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
             for i in range(len(self.colorList)):
                 #if ppollen in trash can
                 drawCircle(100+20*i, 50, 20, fill = self.colorList[i], opacity = 75)
+                drawCircle(bee.x-18+10*i, bee.y+45, self.r, fill = self.colorList[i], opacity = 75)
+                
 
             
 
