@@ -284,6 +284,7 @@ class UnpoFlow:
         self.pollinateCount = 0
         self.needToDrawAgain = False
         self.pollenDraw = False
+        self.pollinated = False
 
     def doStep(self,app):
         self.y += self.dy
@@ -310,14 +311,23 @@ class UnpoFlow:
     def comesOut(self, app):
         return self.y >0 and self.y < app.height
     
+
     def pollination(self, bee,pollen):
         for color in pollen.colorList:
             if color == self.color:
+                
                 index = pollen.colorList.index(self.color)
         
-                if ((self.x - bee.x)**2 + (self.y - bee.y)**2)**0.5 < self.r+5:
+                if (((self.x - bee.x)**2 + (self.y - bee.y)**2)**0.5 < self.r+5) and pollen.alreadyPop == False:
                     pollen.colorList.pop(index)
+                    pollen.beeColor.pop(index)
+                    pollen.alreadyPop = True
+                    self.pollinated = True
                     return True
+                pollen.alreadyPop = False
+                return False
+            
+            
                 
             
         
@@ -328,7 +338,9 @@ class Pollen:
         self.r = 12
         self.counter = 0
         self.colorList = []
+        self.beeColor = []
         self.needToDraw = False
+        self.alreadyPop = False
 
 
     def draw(self,bee,orbs):
@@ -338,6 +350,7 @@ class Pollen:
             if orb.needToDraw == True and orb.needToDrawAgain == False:
                 #color = random.choice(['red', 'yellow', 'blue'])
                 self.colorList.append(orb.color)
+                self.beeColor.append(orb.color)
                 
                 self.counter += 1
                 orb.needToDraw = False
@@ -359,10 +372,28 @@ class Pollen:
             #     drawCircle(bee.x+6, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
             for i in range(len(self.colorList)):
                 #if ppollen in trash can
-                drawCircle(100+20*i, 50, 20, fill = self.colorList[i], opacity = 75)
-                drawCircle(bee.x-18+10*i, bee.y+45, self.r, fill = self.colorList[i], opacity = 75)
-                
+                # if i <=2:
+                #     drawCircle(bee.x-18+10*i, bee.y+45, self.r, fill = self.colorList[i], opacity = 75)
+                if i <=5:
+                    drawCircle(100+20*i, 50, 20, fill = self.colorList[i], opacity = 75)
+                    if self.counter ==1:
+                        drawCircle(bee.x-10, bee.y+45, self.r, fill = self.beeColor[self.counter-1], opacity = 75)
+                    elif self.counter ==2:
+                        drawCircle(bee.x-18, bee.y+45, self.r, fill = self.beeColor[self.counter-2], opacity = 75)
+                        drawCircle(bee.x, bee.y+45, self.r, fill = self.beeColor[self.counter-1], opacity = 75)
+                    elif self.counter ==3:
+                        drawCircle(bee.x-30, bee.y+45, self.r, fill = self.beeColor[self.counter-3], opacity = 75)
+                        drawCircle(bee.x-10, bee.y+45, self.r, fill = self.beeColor[self.counter-2], opacity = 75)
+                        drawCircle(bee.x+10, bee.y+45, self.r, fill = self.beeColor[self.counter-1], opacity = 75)
+                    elif self.counter > 3:
+                        drawCircle(bee.x-18, bee.y+45, self.r, fill = self.beeColor[self.counter-3], opacity = 75)
+                        drawCircle(bee.x-6, bee.y+45, self.r, fill = self.beeColor[self.counter-2], opacity = 75)
+                        drawCircle(bee.x+6, bee.y+45, self.r, fill = self.beeColor[self.counter-1], opacity = 75)
+                    
 
+                if i > 5:
+                    self.colorList.pop(0)
+                
             
 
         
@@ -373,7 +404,7 @@ def onAppStart(app):
 def restart(app):
     app.gameOver = False
     app.paused = False
-    app.stepsPerSecond = 50
+    app.stepsPerSecond = 40
     app.bee = Bee()
     app.helperBee = helperBee(app)
     app.unpolls = []
@@ -460,7 +491,7 @@ def takeStep(app):
             i += 1
             
 
-    if (time.time() - app.lastOrbTime > 2) and (len(app.orbs) < 5):
+    if (time.time() - app.lastOrbTime > 2) and (len(app.orbs) < 4):
         app.orbs.append(Orb(app))
         app.lastOrbTime = time.time()
 
@@ -468,6 +499,7 @@ def takeStep(app):
     #update the unpollinated flowers
     j = 0
     while j < len(app.unpolls):
+        
         unpoll = app.unpolls[j]
         unpoll.doStep(app)
         if unpoll.offBottomEdge(app):
@@ -475,7 +507,7 @@ def takeStep(app):
             print('pop2')
         
         if unpoll.pollination(app.bee,app.pollen):
-    
+                
             unpoll.needToDraw = True
             
             
@@ -486,12 +518,12 @@ def takeStep(app):
             
             
             
-           
+        
         else:
             j += 1
             
 
-    if (time.time() - app.lastunpollTime > 2) and (len(app.unpolls) < 5):
+    if (time.time() - app.lastunpollTime > 1) and (len(app.unpolls) < 2):
         app.unpolls.append(UnpoFlow(app))
         app.lastunpollTime = time.time()
 
