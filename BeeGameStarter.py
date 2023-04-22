@@ -8,7 +8,7 @@ class Bee:
         #Load the frame
         
         #Load the bee gif
-        myGif = Image.open('D:/CMU/semester2/15-112/term_project/bee1.gif')
+        myGif = Image.open('./bee1.gif')
         self.spriteList = []
         self.spriteListTrans = []
         for frame in range(myGif.n_frames):  #For every frame index...
@@ -113,7 +113,7 @@ class Bee:
 class helperBee:
     def __init__(self,app):
         #Load the bee gif
-        myGif = Image.open('D:/CMU/semester2/15-112/term_project/bee2.gif')
+        myGif = Image.open('./bee2.gif')
         self.spriteList = []
         for frame in range(myGif.n_frames):  #For every frame index...
             #Seek to the frame, convert it, add it to our sprite list
@@ -284,13 +284,18 @@ class UnpoFlow:
         self.pollinateCount = 0
         self.needToDrawAgain = False
         self.pollenDraw = False
-        self.pollinated = False
+        self.alreadyPollinated = False
+        self.max_size = self.r * 1.5
+        self.growth_rate = 0.2
 
     def doStep(self,app):
         self.y += self.dy
         self.x += self.dx
         if self.x <= 0 or self.x >= app.width:
             self.dx = -1*self.dx
+        if self.pollinated:
+            if self.r <= self.max_size:
+                self.r += self.growth_rate
         
 
     def draw(self,app):
@@ -313,18 +318,27 @@ class UnpoFlow:
     
 
     def pollination(self, bee,pollen):
+        #a pollen list color or a bee list color
         for color in pollen.colorList:
             if color == self.color:
                 
                 index = pollen.colorList.index(self.color)
+                
         
-                if (((self.x - bee.x)**2 + (self.y - bee.y)**2)**0.5 < self.r+5) and pollen.alreadyPop == False:
-                    pollen.colorList.pop(index)
-                    pollen.beeColor.pop(index)
-                    pollen.alreadyPop = True
+                if (((self.x - bee.x)**2 + (self.y - bee.y)**2)**0.5 < self.r+5) and self.alreadyPollinated == False:
+                    
+                    if (self.color in pollen.colorList) and (self.color not in pollen.beeColor):
+                        pollen.colorList.pop(index)
+                    else:
+                        
+                        index2 = len(pollen.beeColor) - pollen.beeColor[::-1].index(self.color) - 1
+                        pollen.colorList.pop(index)
+
+                        pollen.beeColor.pop(index2)
+                    self.alreadyPollinated = True
                     self.pollinated = True
                     return True
-                pollen.alreadyPop = False
+                
                 return False
             
             
@@ -357,42 +371,24 @@ class Pollen:
                 orb.needToDrawAgain = True
                 self.needToDraw = True
             
-            # if self.counter ==1:
-            #     drawCircle(bee.x-10, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
-            # elif self.counter ==2:
-            #     drawCircle(bee.x-18, bee.y+45, self.r, fill = self.colorList[self.counter-2], opacity = 75)
-            #     drawCircle(bee.x, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
-            # elif self.counter ==3:
-            #     drawCircle(bee.x-30, bee.y+45, self.r, fill = self.colorList[self.counter-3], opacity = 75)
-            #     drawCircle(bee.x-10, bee.y+45, self.r, fill = self.colorList[self.counter-2], opacity = 75)
-            #     drawCircle(bee.x+10, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
-            # elif self.counter > 3:
-            #     drawCircle(bee.x-18, bee.y+45, self.r, fill = self.colorList[self.counter-3], opacity = 75)
-            #     drawCircle(bee.x-6, bee.y+45, self.r, fill = self.colorList[self.counter-2], opacity = 75)
-            #     drawCircle(bee.x+6, bee.y+45, self.r, fill = self.colorList[self.counter-1], opacity = 75)
+            
             for i in range(len(self.colorList)):
-                #if ppollen in trash can
-                # if i <=2:
-                #     drawCircle(bee.x-18+10*i, bee.y+45, self.r, fill = self.colorList[i], opacity = 75)
+                
                 if i <=5:
-                    drawCircle(100+20*i, 50, 20, fill = self.colorList[i], opacity = 75)
-                    if self.counter ==1:
-                        drawCircle(bee.x-10, bee.y+45, self.r, fill = self.beeColor[self.counter-1], opacity = 75)
-                    elif self.counter ==2:
-                        drawCircle(bee.x-18, bee.y+45, self.r, fill = self.beeColor[self.counter-2], opacity = 75)
-                        drawCircle(bee.x, bee.y+45, self.r, fill = self.beeColor[self.counter-1], opacity = 75)
-                    elif self.counter ==3:
-                        drawCircle(bee.x-30, bee.y+45, self.r, fill = self.beeColor[self.counter-3], opacity = 75)
-                        drawCircle(bee.x-10, bee.y+45, self.r, fill = self.beeColor[self.counter-2], opacity = 75)
-                        drawCircle(bee.x+10, bee.y+45, self.r, fill = self.beeColor[self.counter-1], opacity = 75)
-                    elif self.counter > 3:
-                        drawCircle(bee.x-18, bee.y+45, self.r, fill = self.beeColor[self.counter-3], opacity = 75)
-                        drawCircle(bee.x-6, bee.y+45, self.r, fill = self.beeColor[self.counter-2], opacity = 75)
-                        drawCircle(bee.x+6, bee.y+45, self.r, fill = self.beeColor[self.counter-1], opacity = 75)
-                    
+                    drawCircle(100+20*i, 50, 20, fill = self.colorList[i], opacity = 75)   
 
                 if i > 5:
                     self.colorList.pop(0)
+            
+            for j in range(len(self.beeColor)):
+                
+                if j <=2:
+                    drawCircle(bee.x-18+10*j, bee.y+45, self.r, fill = self.beeColor[j], opacity = 75)
+                
+
+                if j > 2:
+                    self.beeColor.pop(0)
+                    
                 
             
 
@@ -455,7 +451,7 @@ def takeStep(app):
         if orb.pollination(app.bee):
             # app.pollinateCount += 0.05
             # totalCount = int(app.pollinateCount//1)
-            orb.pollinateCount += 0.05
+            orb.pollinateCount += 0.1
             totalCount = int(orb.pollinateCount//1)
             if totalCount >=1:
                 
@@ -465,7 +461,7 @@ def takeStep(app):
             app.pollinateCount += totalCount
             app.orbPollinated = True
             
-            app.label = f'You have pollinate {app.score} times'
+            app.label = 'You need some time to get pollen'
             
 
         if orb.pollination(app.helperBee):
@@ -507,6 +503,7 @@ def takeStep(app):
             print('pop2')
         
         if unpoll.pollination(app.bee,app.pollen):
+            
                 
             unpoll.needToDraw = True
             
@@ -575,7 +572,7 @@ def redrawAll(app):
     #Background
     drawRect(0, 0, app.width, app.height, fill='lightGreen')
     drawLabel(app.label, 200, 10, size = 12)
-    drawLabel(f"Your score is: {app.score}", 200, 25, size = 12)
+    drawLabel("Press r to restart or p to pause", 200, 25, size = 12)
     #Call bee's draw method
     app.bee.draw(app)
     if app.helperShow == True:
