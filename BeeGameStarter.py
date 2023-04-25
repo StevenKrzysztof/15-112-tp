@@ -153,24 +153,21 @@ class helperBee:
             # Find nearest unpollinated orb
             minDist = float('inf')
             self.closestOrb = None
-            dx = app.width//2 - self.x
-            dy = app.height//2 - self.y
-            self.x += dx
-            self.y += dy
+            
             for orb in app.orbs:
                 if orb.needToDraw == False:
                     dist = ((self.x - orb.x) ** 2 + (self.y - orb.y) ** 2) ** 0.5
                     if dist < minDist:
                         minDist = dist
                         self.closestOrb = orb
-                        dx = app.width//2 - self.x
-                        dy = app.height//2 - self.y
-                        self.x += dx
-                        self.y += dy
+                        dx = self.closestOrb.x - self.x
+                        dy = self.closestOrb.y - self.y
+
+                        self.x += 0
+                        self.y += 0
                             
 
-                    # if self.closestOrb is not None:
-                    #     self.targetOrb = self.closestOrb
+                
             # Move randomly
             
                         
@@ -190,7 +187,10 @@ class helperBee:
             if self.closestOrb.needToDraw == True:
                 self.closestOrb = None
                 # self.x, self.y = app.width//2,app.height//2
-
+            elif self.closestOrb.y + self.closestOrb.r >= app.height:
+                self.closestOrb = None
+            elif self.closestOrb.x + self.closestOrb.r >= app.width or self.closestOrb.x - self.closestOrb.r <= 0:
+                self.closestOrb = None
             # Limit the bee's speed to a maximum of 5
             self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
             if self.speed > 10:
@@ -201,8 +201,10 @@ class helperBee:
         # Update bee position and velocity
         if self.x <= 0 or self.x >= app.width:
             self.dx = -1 * self.dx
+            self.x = max(0, min(self.x, app.width)) + self.dx
         if self.y <= 0 or self.y >= app.height:
             self.dy = -1 * self.dy
+            self.y = max(0, min(self.y, app.height)) + self.dy
 
         # Update bee sprite
         self.stepCounter += 1
