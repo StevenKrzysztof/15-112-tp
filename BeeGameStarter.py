@@ -137,7 +137,11 @@ class helperBee:
 
         self.ddy = .1
         self.speed = 0
-
+        
+        self.closestOrb = None # Store the closest orb
+        self.pollinating = False
+        self.pollinatedOrb = None
+        
     def draw(self,app):
         #Draw current bee sprite
         drawImage(self.spriteList[self.spriteCounter], 
@@ -146,53 +150,42 @@ class helperBee:
             drawCircle(self.x-18, self.y+45, 12, fill = 'orange', opacity = 75)
         
     def doStep(self, app):
-    # Find closest unpollinated orb, or closest pollinated orb if all are pollinated
-        minDist = float('inf')
-        closestOrb = None
-        for orb in app.orbs:
-            if not orb.pollinated:
-                dist = ((self.x - orb.x) ** 2 + (self.y - orb.y) ** 2) ** 0.5
-                if dist < minDist:
-                    minDist = dist
-                    closestOrb = orb
-            elif closestOrb is None:
-                dist = ((self.x - orb.x) ** 2 + (self.y - orb.y) ** 2) ** 0.5
-                if dist < minDist:
-                    minDist = dist
-                    closestOrb = orb
+        if not self.pollinating:
+            # Find nearest unpollinated orb
+            minDist = float('inf')
+            closestOrb = None
+            for orb in app.orbs:
+                if not orb.pollinated:
+                    dist = ((self.x - orb.x) ** 2 + (self.y - orb.y) ** 2) ** 0.5
+                    if dist < minDist:
+                        minDist = dist
+                        closestOrb = orb
 
-        # Move towards closest orb
-        if closestOrb is not None:
-            dx = closestOrb.x - self.x
-            dy = closestOrb.y - self.y
-            distance = (dx ** 2 + dy ** 2) ** 0.5
-            if distance != 0:
-                dx /= distance
-                dy /= distance
-            self.dx += dx * 0.5
-            self.dy += dy * 0.5
+            if closestOrb is not None:
+                # Move towards nearest orb
+                dx = closestOrb.x - self.x
+                dy = closestOrb.y - self.y
+                distance = (dx ** 2 + dy ** 2) ** 0.5
+                if distance != 0:
+                    dx /= distance
+                    dy /= distance
+                self.dx += dx * 0.5
+                self.dy += dy * 0.5
 
-            # Limit the bee's speed to a maximum of 5
-            self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
-            if self.speed > 5:
-                self.speed = 5
+                # Limit the bee's speed to a maximum of 5
+                self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
+                if self.speed > 5:
+                    self.speed = 5
 
-        # Move towards center if no orbs exist or all orbs are pollinated
+                # Check if bee has reached orb
+                if distance <= closestOrb.r:
+                    self.pollinating = True
+                    self.pollinatedOrb = closestOrb
+
         else:
-            dx = app.width / 2 - self.x
-            dy = app.height / 2 - self.y
-            distance = (dx ** 2 + dy ** 2) ** 0.5
-            if distance != 0:
-                dx /= distance
-                dy /= distance
-            self.dx += dx * 0.5
-            self.dy += dy * 0.5
-
-            # Limit the bee's speed to a maximum of 5
-            self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
-            if self.speed > 5:
-                self.speed = 5
-
+            # Move towards pollinated orb
+            dx = self.pollinatedOrb.x - self.x
+            dy = self.pollinatedOrb.y - self.y
         # Update bee position and velocity
         self.y += self.dy / 10
         self.x += self.dx / 10
@@ -222,7 +215,7 @@ class helperBee:
 #-------------------------------------------------------------------
 class Orb:
     def __init__(self, app):
-        self.x = random.randrange(app.width)
+        self.x = random.randrange(30,app.width-30)
         self.y = 0
         self.dy = random.randrange(2, 4)
         self.dx = random.randrange(-3, 3)
@@ -240,14 +233,18 @@ class Orb:
         self.offset = random.uniform(0, 2*math.pi)
 
     def doStep(self,app):
-        self.y += self.dy
+        self.y += self.dy//2
         self.x += self.dx
         # Add sinusoidal movement to the y-coordinate
-        amplitude = random.randrange(8, 15)
+        amplitude = 5
         frequency = 0.03
         self.x = amplitude*math.sin(frequency*self.y + self.offset) + self.x
         
-        if self.x <= 0 or self.x >= app.width:
+        if self.x <= 0:
+            self.x = 0
+            self.dx = -1*self.dx
+        elif self.x >= app.width:
+            self.x = app.width
             self.dx = -1*self.dx
         if self.r <= self.max_size:
             self.r += self.growth_rate
@@ -292,10 +289,10 @@ class Orb:
 #-------------------------------------------------------------------
 class UnpoFlow:
     def __init__(self, app):
-        self.x = random.randrange(app.width)
+        self.x = random.randrange(50, app.width-50)
         self.y = 0
         self.dy = random.randrange(2, 4)
-        self.dx = random.randrange(-3, 3)
+        self.dx = random.randrange(-1, 1)
         
         self.r = random.randrange(15, 30)
         self.color = random.choice(['red', 'yellow', 'blue'])
@@ -306,16 +303,29 @@ class UnpoFlow:
         self.pollenDraw = False
         self.alreadyPollinated = False
         self.max_size = self.r * 1.5
-        self.growth_rate = 0.2
+        self.growth_rate = 0.25
         self.offset = random.uniform(0, 2*math.pi)
 
     def doStep(self,app):
-        self.y += self.dy
+        self.y += self.dy//2
         self.x += self.dx
         # Add sinusoidal movement to the y-coordinate
-        amplitude = random.randrange(8,15)
+        amplitude = 5
         frequency = 0.03
         self.x = amplitude*math.sin(frequency*self.y + self.offset) + self.x
+        if self.pollinated== True and self.r <= self.max_size:
+        
+            self.r += self.growth_rate
+        if self.x <= 0:
+            self.x = 0 
+            self.dx = -1*self.dx
+            
+        elif self.x >= app.width:
+            self.x = app.width
+            self.dx = -1*self.dx
+            
+        
+
         
 
     def draw(self,app):
@@ -328,8 +338,8 @@ class UnpoFlow:
             drawCircle(self.x, self.y, (self.r-5)//2, fill = 'purple', opacity = 75)
         
 
-    def offLeftEdge(self):
-            return self.x < 0 - self.r
+    # def offLeftEdge(self):
+    #         return self.x < 0 - self.r
     
     def offBottomEdge(self, app):
         return self.y > app.height
@@ -357,6 +367,7 @@ class UnpoFlow:
                         pollen.beeColor.pop(index2)
                     self.alreadyPollinated = True
                     self.pollinated = True
+                
                     return True
                 
                 return False
@@ -415,9 +426,9 @@ class Pollen:
         
 #-------------------------------------------------------------------
 def onAppStart(app):
-    restart(app)
+    game_restart(app)
 
-def restart(app):
+def game_restart(app):
     app.gameOver = False
     app.paused = False
     app.stepsPerSecond = 40
@@ -438,18 +449,19 @@ def restart(app):
     app.pollen = Pollen()
     app.mousePosX = 100
     app.mousePosY = 100
-
+    app.url = 'https://as2.ftcdn.net/v2/jpg/02/90/87/69/1000_F_290876973_mCltaYqk3G8FWiszXxrCwzUL5wmbGHSt.jpg'
     
     
-def onStep(app):
+    
+def game_onStep(app):
     if app.paused == False and app.gameOver == False:
     
-        takeStep(app)
+        game_takeStep(app)
         
-def onKeyPress(app):
+def game_onKeyPress(app):
     if app.key =='p':
         app.paused = not app.paused
-def takeStep(app):
+def game_takeStep(app):
     dist = math.sqrt((app.bee.x - app.mousePosX)**2 + (app.bee.y - app.mousePosY)**2)
     if dist > 5:
         app.bee.doStep(app)
@@ -548,25 +560,25 @@ def takeStep(app):
         app.gameOver = True
 
         app.label = 'Game over you dumb'
+        setActiveScreen('gameOver')
   
 
-def onMouseMove(app, mouseX, mouseY):
+def game_onMouseMove(app, mouseX, mouseY):
     # This is called when the user moves the mouse
     # while it is not pressed:
     if app.gameOver == False:
         app.mousePosX = mouseX
         app.mousePosY = mouseY
 
-def onKeyPress(app, key):
+def game_onKeyPress(app, key):
     
     if key == 'r':
-        restart(app)
+        game_restart(app)
     elif key =='p':
         app.paused = not app.paused
-    else:
-        app.bee.flap()
+    
 
-def redrawAll(app):
+def game_redrawAll(app):
     # #new BG of garden gif
     # myBgGif = Image.open('D:/CMU/semester2/15-112/term_project/garden.gif')
     # spriteList = []
@@ -609,4 +621,50 @@ def redrawAll(app):
         unpoll.draw(app)
     
 #Change width and height to suit your needs    
-runApp(width=800, height=600)
+# runApp(width=800, height=600)
+def welcome_redrawAll(app):
+    drawImage(app.url,0,0)
+    drawLabel("Welcome to The Game", app.width/2, app.height/2, size = 24)
+    drawCircle(200,200,50,fill='blue')
+    
+
+
+
+def welcome_onKeyPress(app, key):
+    if key == 'space':
+        setActiveScreen('game')
+def welcome_onMousePress(app, mouseX, mouseY):
+    # This is called when the user presses the mouse.
+    # For this example, we just have to update the
+    # model to move the dot to this location:
+    if ((mouseX-200)**2 + (mouseY-200)**2)**0.5 <= 50:
+        setActiveScreen('game')
+    
+#---------------------------------------------------
+#Game Over screen
+def gameOver_redrawAll(app):
+    drawImage(app.url,0,0)
+    drawLabel("Your Game is Over.", app.width/2, app.height/2, size = 24)
+    drawLabel("Good Game", app.width/2, 35+app.height/2, size = 20)
+    drawLabel("Press R to restart", app.width/2, 75+app.height/2, size = 24)
+    drawCircle(200,200,50,fill='blue')
+    
+
+
+
+def gameOver_onKeyPress(app, key):
+    if key == 'r':
+        setActiveScreen('game')
+        game_restart(app)
+def gameOver_onMousePress(app, mouseX, mouseY):
+    # This is called when the user presses the mouse.
+    # For this example, we just have to update the
+    # model to move the dot to this location:
+    if ((mouseX-200)**2 + (mouseY-200)**2)**0.5 <= 50:
+        setActiveScreen('game')
+        game_restart(app)
+
+#---------------------------------------------------
+
+# Your screen names should be strings
+runAppWithScreens(initialScreen='welcome',width=1000, height=500)
