@@ -102,7 +102,7 @@ class Bee:
 
     def isColliding(self, orbs,app):
         for orb in orbs:
-            if ((self.x - orb.x)**2 + (self.y - orb.y)**2)**0.5 < orb.r+5:
+            if ((self.x - orb.x)**2 + (self.y - orb.y)**2)**0.5 < orb.r:
                 orb.pollinated = True
                 #return True
             return False
@@ -137,10 +137,9 @@ class helperBee:
 
         self.ddy = .1
         self.speed = 0
-        
-        self.closestOrb = None # Store the closest orb
-        self.pollinating = False
-        self.pollinatedOrb = None
+        self.targetOrb = None
+        self.closestOrb = None
+    
         
     def draw(self,app):
         #Draw current bee sprite
@@ -150,45 +149,49 @@ class helperBee:
             drawCircle(self.x-18, self.y+45, 12, fill = 'orange', opacity = 75)
         
     def doStep(self, app):
-        if not self.pollinating:
+        if self.targetOrb is None:
             # Find nearest unpollinated orb
             minDist = float('inf')
-            closestOrb = None
+            self.closestOrb = None
             for orb in app.orbs:
-                if not orb.pollinated:
+                if orb.needToDraw == False and orb.immature == False:
                     dist = ((self.x - orb.x) ** 2 + (self.y - orb.y) ** 2) ** 0.5
                     if dist < minDist:
                         minDist = dist
                         closestOrb = orb
+                        
+                            
 
-            if closestOrb is not None:
-                # Move towards nearest orb
-                dx = closestOrb.x - self.x
-                dy = closestOrb.y - self.y
-                distance = (dx ** 2 + dy ** 2) ** 0.5
-                if distance != 0:
-                    dx /= distance
-                    dy /= distance
-                self.dx += dx * 0.5
-                self.dy += dy * 0.5
+                    if closestOrb is not None:
+                        self.targetOrb = closestOrb
+                        
+                
 
-                # Limit the bee's speed to a maximum of 5
-                self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
-                if self.speed > 5:
-                    self.speed = 5
+        if self.targetOrb is not None:
+            # Move towards target orb
+            dx = self.targetOrb.x - self.x
+            dy = self.targetOrb.y - self.y
+            
+            distance = (dx ** 2 + dy ** 2) ** 0.5
+            if distance >= 5:
+                dx /= distance
+                dy /= distance
+                self.x += dx*self.speed
+                self.y += dy*self.speed
+            elif distance < 5 and not self.targetOrb.needToDraw:
+                self.targetOrb = None
+                # self.x, self.y = app.width//2,app.height//2
 
-                # Check if bee has reached orb
-                if distance <= closestOrb.r:
-                    self.pollinating = True
-                    self.pollinatedOrb = closestOrb
+            # Limit the bee's speed to a maximum of 5
+            self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
+            if self.speed > 10:
+                self.speed = 10
 
         else:
-            # Move towards pollinated orb
-            dx = self.pollinatedOrb.x - self.x
-            dy = self.pollinatedOrb.y - self.y
+            # Move randomly
+            self.x += self.dx
+            self.y += self.dy
         # Update bee position and velocity
-        self.y += self.dy / 10
-        self.x += self.dx / 10
         if self.x <= 0 or self.x >= app.width:
             self.dx = -1 * self.dx
         if self.y <= 0 or self.y >= app.height:
@@ -207,7 +210,7 @@ class helperBee:
 
     def isColliding(self, orbs,app):
         for orb in orbs:
-            if ((self.x - orb.x)**2 + (self.y - orb.y)**2)**0.5 < orb.r+5:
+            if ((self.x - orb.x)**2 + (self.y - orb.y)**2)**0.5 < orb.r:
                 orb.pollinated = True
                 return True
             return False
@@ -231,6 +234,7 @@ class Orb:
         self.needToDrawAgain = False
         self.pollenDraw = False
         self.offset = random.uniform(0, 2*math.pi)
+        self.added = False
 
     def doStep(self,app):
         self.y += self.dy//2
@@ -271,13 +275,13 @@ class Orb:
             return self.x < 0 - self.r
     
     def offBottomEdge(self, app):
-        return self.y > app.height
+        return self.y+ self.r > app.height
     def comesOut(self, app):
         return self.y >0 and self.y < app.height
     
     def pollination(self, bee):
         if self.r >=30:
-            if ((self.x - bee.x)**2 + (self.y - bee.y)**2)**0.5 < self.r+5:
+            if ((self.x - bee.x)**2 + (self.y - bee.y)**2)**0.5 < self.r:
                 
                 return True
             
@@ -342,7 +346,7 @@ class UnpoFlow:
     #         return self.x < 0 - self.r
     
     def offBottomEdge(self, app):
-        return self.y > app.height
+        return self.y + self.r > app.height
     def comesOut(self, app):
         return self.y >0 and self.y < app.height
     
@@ -475,10 +479,11 @@ def game_takeStep(app):
         orb.doStep(app)
         if orb.offBottomEdge(app):
             app.orbs.pop(i)
+            
             print('pop')
             app.score += 1
-            if app.score >= 1 and app.score<=10:
-                app.helperShow = True
+            # if app.score >= 1 and app.score<=10:
+            #     app.helperShow = True
         
         if orb.pollination(app.bee):
             # app.pollinateCount += 0.05
@@ -488,10 +493,10 @@ def game_takeStep(app):
             if totalCount >=1:
                 
                 orb.needToDraw = True
-                app.pollinated = True
+                #app.pollinated = True
 
             app.pollinateCount += totalCount
-            app.orbPollinated = True
+            #app.orbPollinated = True
             
             app.label = 'You need some time to get pollen'
             
@@ -501,12 +506,12 @@ def game_takeStep(app):
             # totalCount = int(app.pollinateCount//1)
             orb.pollinateCount += 0.05
             totalCount = int(orb.pollinateCount//1)
-            if totalCount >=1:
+            if totalCount >=10:
                 totalCount = 1
                 orb.needToDraw = True
                 app.pollinated1 = True
             app.pollinateCount += totalCount
-            app.orbPollinated = True
+            #app.orbPollinated = True
             
             
 
@@ -576,6 +581,8 @@ def game_onKeyPress(app, key):
         game_restart(app)
     elif key =='p':
         app.paused = not app.paused
+    elif key == 'h':
+        app.helperShow = True
     
 
 def game_redrawAll(app):
