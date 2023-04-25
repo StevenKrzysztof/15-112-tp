@@ -149,37 +149,46 @@ class helperBee:
             drawCircle(self.x-18, self.y+45, 12, fill = 'orange', opacity = 75)
         
     def doStep(self, app):
-        if self.targetOrb is None:
+        if self.closestOrb is None:
             # Find nearest unpollinated orb
             minDist = float('inf')
             self.closestOrb = None
+            dx = app.width//2 - self.x
+            dy = app.height//2 - self.y
+            self.x += dx
+            self.y += dy
             for orb in app.orbs:
-                if orb.needToDraw == False and orb.immature == False:
+                if orb.needToDraw == False:
                     dist = ((self.x - orb.x) ** 2 + (self.y - orb.y) ** 2) ** 0.5
                     if dist < minDist:
                         minDist = dist
-                        closestOrb = orb
-                        
+                        self.closestOrb = orb
+                        dx = app.width//2 - self.x
+                        dy = app.height//2 - self.y
+                        self.x += dx
+                        self.y += dy
                             
 
-                    if closestOrb is not None:
-                        self.targetOrb = closestOrb
+                    # if self.closestOrb is not None:
+                    #     self.targetOrb = self.closestOrb
+            # Move randomly
+            
                         
                 
 
-        if self.targetOrb is not None:
+        elif self.closestOrb != None:
             # Move towards target orb
-            dx = self.targetOrb.x - self.x
-            dy = self.targetOrb.y - self.y
+            dx = self.closestOrb.x - self.x
+            dy = self.closestOrb.y - self.y
             
             distance = (dx ** 2 + dy ** 2) ** 0.5
-            if distance >= 5:
+            if distance > 0:
                 dx /= distance
                 dy /= distance
                 self.x += dx*self.speed
                 self.y += dy*self.speed
-            elif distance < 5 and not self.targetOrb.needToDraw:
-                self.targetOrb = None
+            if self.closestOrb.needToDraw == True:
+                self.closestOrb = None
                 # self.x, self.y = app.width//2,app.height//2
 
             # Limit the bee's speed to a maximum of 5
@@ -187,10 +196,8 @@ class helperBee:
             if self.speed > 10:
                 self.speed = 10
 
-        else:
-            # Move randomly
-            self.x += self.dx
-            self.y += self.dy
+       
+            
         # Update bee position and velocity
         if self.x <= 0 or self.x >= app.width:
             self.dx = -1 * self.dx
@@ -230,7 +237,6 @@ class Orb:
         self.pollinated = False
         self.needToDraw = False
         self.pollinateCount = 0
-        self.immature =False
         self.needToDrawAgain = False
         self.pollenDraw = False
         self.offset = random.uniform(0, 2*math.pi)
@@ -255,11 +261,7 @@ class Orb:
         #self.x += random.randrange(-2,2) * self.dx
 
     def draw(self,app):
-        if self.immature == True:
-            drawCircle(self.x, self.y, (self.r)//2, fill = 'green')
-            drawCircle(self.x, self.y, self.r, fill = self.color, opacity = 25)
-            
-            drawLabel("immature", self.x, self.y, size = 8)
+        
         if self.needToDraw == False and self.needToDrawAgain == False:
             drawCircle(self.x, self.y, self.r, fill = self.color, opacity = 75)
         elif self.needToDraw == False and self.needToDrawAgain == True:
@@ -280,14 +282,13 @@ class Orb:
         return self.y >0 and self.y < app.height
     
     def pollination(self, bee):
-        if self.r >=30:
-            if ((self.x - bee.x)**2 + (self.y - bee.y)**2)**0.5 < self.r:
+        
+        if ((self.x - bee.x)**2 + (self.y - bee.y)**2)**0.5 < self.r:
                 
-                return True
+            return True
             
         else:
-            if self.max_size<30:
-                self.immature = True
+            
             return False
         
 #-------------------------------------------------------------------
@@ -506,7 +507,7 @@ def game_takeStep(app):
             # totalCount = int(app.pollinateCount//1)
             orb.pollinateCount += 0.05
             totalCount = int(orb.pollinateCount//1)
-            if totalCount >=10:
+            if totalCount >=5:
                 totalCount = 1
                 orb.needToDraw = True
                 app.pollinated1 = True
