@@ -1,0 +1,50 @@
+def doStep(self, app):
+    # If not currently targeting an orb, find the closest unpollinated orb and set it as the target
+        if self.targetOrb is None:
+            minDist = float('inf')
+            for orb in app.orbs:
+                if not orb.pollinated:
+                    dist = ((self.x - orb.x) ** 2 + (self.y - orb.y) ** 2) ** 0.5
+                    if dist < minDist:
+                        minDist = dist
+                        self.targetOrb = orb
+
+        # If currently targeting an orb, check if the condition has changed or if the orb has popped
+        elif self.targetOrb.pollinated or not self.targetOrb.checkCondition():
+            self.targetOrb = None
+
+        # If currently targeting an orb, move towards it
+        if self.targetOrb is not None:
+            dx = self.targetOrb.x - self.x
+            dy = self.targetOrb.y - self.y
+            distance = (dx ** 2 + dy ** 2) ** 0.5
+            if distance != 0:
+                dx /= distance
+                dy /= distance
+            self.dx += dx * 0.5
+            self.dy += dy * 0.5
+
+            # Limit the bee's speed to a maximum of 5
+            self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
+            if self.speed > 5:
+                self.speed = 5
+
+        # If not currently targeting an orb, move towards center
+        else:
+            dx = app.width / 2 - self.x
+            dy = app.height / 2 - self.y
+            distance = (dx ** 2 + dy ** 2) ** 0.5
+            if distance != 0:
+                dx /= distance
+                dy /= distance
+            self.dx += dx * 0.5
+            self.dy += dy * 0.5
+
+            # Limit the bee's speed to a maximum of 5
+            self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
+            if self.speed > 5:
+                self.speed = 5
+
+        # Update bee position and velocity
+        self.y += self.dy / 10
+        self.x += self.dx / 10
