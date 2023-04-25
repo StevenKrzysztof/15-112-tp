@@ -145,51 +145,65 @@ class helperBee:
         if app.pollinated1 != False:
             drawCircle(self.x-18, self.y+45, 12, fill = 'orange', opacity = 75)
         
-    def doStep(self,app):
+    def doStep(self, app):
+    # Find closest unpollinated orb, or closest pollinated orb if all are pollinated
         minDist = float('inf')
         closestOrb = None
         for orb in app.orbs:
-            if orb.immature == False:
-                # calculate distance between bee and orb
-                dist = ((self.x - orb.x)**2 + (self.y - orb.y)**2)**0.5
+            if not orb.pollinated:
+                dist = ((self.x - orb.x) ** 2 + (self.y - orb.y) ** 2) ** 0.5
                 if dist < minDist:
                     minDist = dist
                     closestOrb = orb
-            else:
-                closestOrb = None
-            
-        if closestOrb:
-            # move towards closest orb
+            elif closestOrb is None:
+                dist = ((self.x - orb.x) ** 2 + (self.y - orb.y) ** 2) ** 0.5
+                if dist < minDist:
+                    minDist = dist
+                    closestOrb = orb
+
+        # Move towards closest orb
+        if closestOrb is not None:
             dx = closestOrb.x - self.x
             dy = closestOrb.y - self.y
-            distance = (dx**2 + dy**2)**0.5
+            distance = (dx ** 2 + dy ** 2) ** 0.5
             if distance != 0:
                 dx /= distance
                 dy /= distance
             self.dx += dx * 0.5
             self.dy += dy * 0.5
-        else:
-            self.dx +=0
-            self.dy +=0
-        
-        # limit the speed of the bee
-        self.speed = (self.dx**2 + self.dy**2)**0.5
-        #self.speed += distance / 10
 
-        # Limit the bee's speed to a maximum of 10
-        if self.speed > 5:
-            self.speed = 5
-        
-        self.y += self.dy/10
-        self.x += self.dx/10
-        
+            # Limit the bee's speed to a maximum of 5
+            self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
+            if self.speed > 5:
+                self.speed = 5
+
+        # Move towards center if no orbs exist or all orbs are pollinated
+        else:
+            dx = app.width / 2 - self.x
+            dy = app.height / 2 - self.y
+            distance = (dx ** 2 + dy ** 2) ** 0.5
+            if distance != 0:
+                dx /= distance
+                dy /= distance
+            self.dx += dx * 0.5
+            self.dy += dy * 0.5
+
+            # Limit the bee's speed to a maximum of 5
+            self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
+            if self.speed > 5:
+                self.speed = 5
+
+        # Update bee position and velocity
+        self.y += self.dy / 10
+        self.x += self.dx / 10
         if self.x <= 0 or self.x >= app.width:
-            self.dx = -1*self.dx
+            self.dx = -1 * self.dx
         if self.y <= 0 or self.y >= app.height:
-            self.dy = -1*self.dy
-            
+            self.dy = -1 * self.dy
+
+        # Update bee sprite
         self.stepCounter += 1
-        if self.stepCounter >= 2000: #Update the sprite every 10th call
+        if self.stepCounter >= 2000:  # Update the sprite every 10th call
             self.spriteCounter = (self.spriteCounter + 1) % len(self.spriteList)
             self.stepCounter = 0
 
@@ -223,10 +237,16 @@ class Orb:
         self.immature =False
         self.needToDrawAgain = False
         self.pollenDraw = False
+        self.offset = random.uniform(0, 2*math.pi)
 
     def doStep(self,app):
         self.y += self.dy
         self.x += self.dx
+        # Add sinusoidal movement to the y-coordinate
+        amplitude = random.randrange(8, 15)
+        frequency = 0.03
+        self.x = amplitude*math.sin(frequency*self.y + self.offset) + self.x
+        
         if self.x <= 0 or self.x >= app.width:
             self.dx = -1*self.dx
         if self.r <= self.max_size:
@@ -287,15 +307,15 @@ class UnpoFlow:
         self.alreadyPollinated = False
         self.max_size = self.r * 1.5
         self.growth_rate = 0.2
+        self.offset = random.uniform(0, 2*math.pi)
 
     def doStep(self,app):
         self.y += self.dy
         self.x += self.dx
-        if self.x <= 0 or self.x >= app.width:
-            self.dx = -1*self.dx
-        if self.pollinated:
-            if self.r <= self.max_size:
-                self.r += self.growth_rate
+        # Add sinusoidal movement to the y-coordinate
+        amplitude = random.randrange(8,15)
+        frequency = 0.03
+        self.x = amplitude*math.sin(frequency*self.y + self.offset) + self.x
         
 
     def draw(self,app):
@@ -520,7 +540,7 @@ def takeStep(app):
             j += 1
             
 
-    if (time.time() - app.lastunpollTime > 1) and (len(app.unpolls) < 2):
+    if (time.time() - app.lastunpollTime > 6) and (len(app.unpolls) < 2):
         app.unpolls.append(UnpoFlow(app))
         app.lastunpollTime = time.time()
 
@@ -589,4 +609,4 @@ def redrawAll(app):
         unpoll.draw(app)
     
 #Change width and height to suit your needs    
-runApp(width=600, height=600)
+runApp(width=800, height=600)
