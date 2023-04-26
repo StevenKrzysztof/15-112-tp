@@ -156,7 +156,7 @@ class helperBee:
                 self.closestOrb = None
                 
                 for orb in app.orbs:
-                    if orb.needToDrawByHelper == False and orb.needToDraw == False:
+                    if orb.needToDrawByHelper == False and orb.needToDraw == False and orb.needToDrawByHelper2 == False: 
                         dist = ((self.x - orb.x) ** 2 + (self.y - orb.y) ** 2) ** 0.5
                         if dist < minDist:
                             minDist = dist
@@ -189,7 +189,7 @@ class helperBee:
                     dy /= distance
                     self.x += dx*self.speed
                     self.y += dy*self.speed
-                if self.closestOrb.needToDraw == True or self.closestOrb.needToDrawByHelper == True:
+                if self.closestOrb.needToDraw == True or self.closestOrb.needToDrawByHelper == True or self.closestOrb.needToDrawByHelper2 == True:
                     self.closestOrb = None
                     # self.x, self.y = app.width//2,app.height//2
                 elif self.closestOrb.y + self.closestOrb.r >= app.height:
@@ -207,7 +207,7 @@ class helperBee:
                 self.closestUnpoll = None
                 
                 for unpoll in app.unpolls:
-                    if unpoll.needToDrawByHelper == False and unpoll.needToDraw == False:
+                    if unpoll.needToDrawByHelper == False and unpoll.needToDraw == False and unpoll.needToDrawByHelper2 == False:
                         dist = ((self.x - unpoll.x) ** 2 + (self.y - unpoll.y) ** 2) ** 0.5
                         # if dist < minDist:
                         #     minDist = dist
@@ -240,7 +240,7 @@ class helperBee:
                     dy /= distance
                     self.x += dx*self.speed
                     self.y += dy*self.speed
-                if self.closestUnpoll.needToDraw == True or self.closestUnpoll.needToDrawByHelper == True:
+                if self.closestUnpoll.needToDraw == True or self.closestUnpoll.needToDrawByHelper == True or self.closestUnpoll.needToDrawByHelper2 == True:
                     self.closestUnpoll = None
                     # self.x, self.y = app.width//2,app.height//2
                 elif self.closestUnpoll.y + self.closestUnpoll.r >= app.height:
@@ -288,7 +288,185 @@ class helperBee:
                 orb.pollinated = True
                 return True
             return False
+#-------------------------------------------------------------------
+class helperBee2:
+    def __init__(self,app):
+        #Load the bee gif
+        myGif = Image.open('./bee2.gif')
+        self.spriteList = []
+        self.spriteListTrans = []
+        for frame in range(myGif.n_frames):  #For every frame index...
+            #Seek to the frame, convert it, add it to our sprite list
+            myGif.seek(frame)
+            fr = myGif.resize((myGif.size[0]//10, myGif.size[1]//10))
+            fr2 = fr.transpose(Image.FLIP_LEFT_RIGHT)
+            fr = CMUImage(fr)
+            fr2 = CMUImage(fr2)
+            self.spriteList.append(fr)
+            self.spriteListTrans.append(fr2)
 
+        ##Fix for broken transparency on frame 0
+        self.spriteList.pop(0)
+       
+
+        #Set sprite counters
+        self.stepCounter = 0
+        self.spriteCounter = 0
+        self.spriteListTrans.pop(0)
+        #Set initial position, velocity, acceleration
+        self.x, self.y = app.width//4,app.height//4
+        self.dy = random.randrange(-5,5)
+        self.dx = random.randrange(-5,5)
+
+        self.ddy = .1
+        self.speed = 0
+        self.closestUnpoll = None
+        self.closestOrb = None
+        self.turn = False
+    
+        
+    
+        
+    def doStep(self, app):
+        if len(app.pollen.colorList) <6:
+            if self.closestOrb is None:
+                # Find nearest unpollinated orb
+                minDist = float('inf')
+                self.closestOrb = None
+                
+                for orb in app.orbs:
+                    if orb.needToDrawByHelper == False and orb.needToDraw == False and orb.needToDrawByHelper2 == False:
+                        dist = ((self.x - orb.x) ** 2 + (self.y - orb.y) ** 2) ** 0.5
+                        if dist < minDist:
+                            minDist = dist
+                            self.closestOrb = orb
+                            dx = self.closestOrb.x - self.x
+                            dy = self.closestOrb.y - self.y
+
+                            self.x += 0
+                            self.y += 0
+                                
+
+                    
+                # Move randomly
+                
+                            
+                    
+
+            elif self.closestOrb != None:
+                # Move towards target orb
+                dx = self.closestOrb.x - self.x
+                dy = self.closestOrb.y - self.y
+                if dx>=0:
+                    self.turn = True
+                else:
+                    self.turn = False
+                
+                distance = (dx ** 2 + dy ** 2) ** 0.5
+                if distance > 0:
+                    dx /= distance
+                    dy /= distance
+                    self.x += dx*self.speed
+                    self.y += dy*self.speed
+                if self.closestOrb.needToDraw == True or self.closestOrb.needToDrawByHelper == True or self.closestOrb.needToDrawByHelper2 == True:
+                    self.closestOrb = None
+                    # self.x, self.y = app.width//2,app.height//2
+                elif self.closestOrb.y + self.closestOrb.r >= app.height:
+                    self.closestOrb = None
+                elif self.closestOrb.x + self.closestOrb.r >= app.width or self.closestOrb.x - self.closestOrb.r <= 0:
+                    self.closestOrb = None
+                # Limit the bee's speed to a maximum of 5
+                self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
+                if self.speed > 10:
+                    self.speed = 10
+        else: 
+            if self.closestUnpoll is None:
+                # Find nearest unpollinated orb
+                minDist = float('inf')
+                self.closestUnpoll = None
+                
+                for unpoll in app.unpolls:
+                    if unpoll.needToDrawByHelper == False and unpoll.needToDraw == False and unpoll.needToDrawByHelper2 == False:
+                        dist = ((self.x - unpoll.x) ** 2 + (self.y - unpoll.y) ** 2) ** 0.5
+                        # if dist < minDist:
+                        #     minDist = dist
+                        self.closestUnpoll = unpoll
+                        dx = self.closestUnpoll.x - self.x
+                        dy = self.closestUnpoll.y - self.y
+
+                        self.x += 0
+                        self.y += 0
+                                
+
+                    
+                # Move randomly
+                
+                            
+                    
+
+            elif self.closestUnpoll != None and self.closestUnpoll.color in app.pollen.colorList:
+                # Move towards target orb
+                dx = self.closestUnpoll.x - self.x
+                dy = self.closestUnpoll.y - self.y
+                if dx>=0:
+                    self.turn = True
+                else:
+                    self.turn = False
+                
+                distance = (dx ** 2 + dy ** 2) ** 0.5
+                if distance > 0:
+                    dx /= distance
+                    dy /= distance
+                    self.x += dx*self.speed
+                    self.y += dy*self.speed
+                if self.closestUnpoll.needToDraw == True or self.closestUnpoll.needToDrawByHelper == True or self.closestUnpoll.needToDrawByHelper2 == True:
+                    self.closestUnpoll = None
+                    # self.x, self.y = app.width//2,app.height//2
+                elif self.closestUnpoll.y + self.closestUnpoll.r >= app.height:
+                    self.closestUnpoll = None
+                elif self.closestUnpoll.x + self.closestUnpoll.r >= app.width or self.closestUnpoll.x - self.closestUnpoll.r <= 0:
+                    self.closestUnpoll = None
+                # Limit the bee's speed to a maximum of 5
+                self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
+                if self.speed > 10:
+                    self.speed = 10
+
+
+       
+            
+        # Update bee position and velocity
+        if self.x <= 0 or self.x >= app.width:
+            self.dx = -1 * self.dx
+            self.x = max(0, min(self.x, app.width)) + self.dx
+        if self.y <= 0 or self.y >= app.height:
+            self.dy = -1 * self.dy
+            self.y = max(0, min(self.y, app.height)) + self.dy
+
+        # Update bee sprite
+        self.stepCounter += 1
+        if self.stepCounter >= 2000:  # Update the sprite every 10th call
+            self.spriteCounter = (self.spriteCounter + 1) % len(self.spriteList)
+            self.stepCounter = 0
+
+        #Update position and velocity
+    
+    def draw(self,app):
+            #Draw current bee sprite
+            if self.turn:
+                drawImage(self.spriteList[self.spriteCounter], 
+                        self.x, self.y, align = 'center')
+            else:
+                drawImage(self.spriteListTrans[self.spriteCounter], 
+                        self.x, self.y, align = 'center')
+            
+
+
+    def isColliding(self, orbs,app):
+        for orb in orbs:
+            if ((self.x - orb.x)**2 + (self.y - orb.y)**2)**0.5 < orb.r:
+                orb.pollinated = True
+                return True
+            return False
 #-------------------------------------------------------------------
 class Orb:
     def __init__(self, app):
@@ -304,6 +482,7 @@ class Orb:
         self.pollinated = False
         self.needToDraw = False
         self.needToDrawByHelper = False
+        self.needToDrawByHelper2 = False
         self.pollinateCount = 0
         self.needToDrawAgain = False
         self.pollenDraw = False
@@ -330,13 +509,13 @@ class Orb:
 
     def draw(self,app):
         
-        if self.needToDraw == False and self.needToDrawAgain == False and self.needToDrawByHelper == False:
+        if self.needToDraw == False and self.needToDrawAgain == False and self.needToDrawByHelper == False and self.needToDrawByHelper2 == False:
             drawCircle(self.x, self.y, self.r, fill = self.color, opacity = 75)
-        elif self.needToDraw == False and self.needToDrawAgain == True and self.needToDrawByHelper == False:
+        elif self.needToDraw == False and self.needToDrawAgain == True and self.needToDrawByHelper == False and self.needToDrawByHelper2 == False:
             drawCircle(self.x, self.y, self.r-5, fill = self.color, opacity = 75)
             drawCircle(self.x, self.y, (self.r-5)//2, fill = 'white', opacity = 75)
             drawCircle(self.x, self.y, (self.r-5)//4, fill = self.color, opacity = 75)
-        elif self.needToDraw == True or self.needToDrawByHelper==True:
+        elif self.needToDraw == True or self.needToDrawByHelper==True or self.needToDrawByHelper2==True:
             drawCircle(self.x, self.y, self.r-5, fill = self.color, opacity = 75)
             drawCircle(self.x, self.y, (self.r-5)//2, fill = 'white', opacity = 75)
             drawCircle(self.x, self.y, (self.r-5)//4, fill = self.color, opacity = 75)
@@ -372,6 +551,7 @@ class UnpoFlow:
         self.pollinated = False
         self.needToDraw = False
         self.needToDrawByHelper = False
+        self.needToDrawByHelper2 = False
         self.pollinateCount = 0
         self.needToDrawAgain = False
         self.pollenDraw = False
@@ -403,11 +583,11 @@ class UnpoFlow:
         
 
     def draw(self,app):
-        if self.pollinated == False and self.needToDraw == False and self.needToDrawByHelper == False:
+        if self.pollinated == False and self.needToDraw == False and self.needToDrawByHelper == False and self.needToDrawByHelper2 == False:
             drawCircle(self.x, self.y, self.r-5, fill = self.color, opacity = 75)
             drawCircle(self.x, self.y, (self.r-5)//2, fill = 'black', opacity = 75)
         # drawCircle(self.x, self.y, (self.r-5)//4, fill = self.color, opacity = 75)
-        elif self.needToDraw == True or self.needToDrawByHelper == True:
+        elif self.needToDraw == True or self.needToDrawByHelper == True or self.needToDrawByHelper2 == False:
             drawCircle(self.x, self.y, self.r-5, fill = self.color, opacity = 75)
             drawCircle(self.x, self.y, (self.r-5)//2, fill = 'purple', opacity = 75)
         
@@ -431,16 +611,23 @@ class UnpoFlow:
         
                 if (((self.x - bee.x)**2 + (self.y - bee.y)**2)**0.5 < self.r+5) and self.alreadyPollinated == False:
                     
-                    if (self.color in pollen.colorList) and (self.color not in pollen.beeColor):
+                    if (self.color in pollen.colorList) and (self.color not in pollen.beeColor) and (self.color not in pollen.helperBeeColor2):
                         pollen.colorList.pop(index)
-                        index3 = pollen.helperBeeColor.index(self.color)
-                        pollen.helperBeeColor.pop(index3)
-                    else:
+                        index2 = len(pollen.helperBeeColor) - pollen.helperBeeColor[::-1].index(self.color) - 1
+                        
+                        pollen.helperBeeColor.pop(index2)
+                    elif (self.color in pollen.colorList) and (self.color not in pollen.helperBeeColor) and (self.color not in pollen.helperBeeColor2):
                         
                         index2 = len(pollen.beeColor) - pollen.beeColor[::-1].index(self.color) - 1
+                        
+                        pollen.beeColor.pop(index2)
+                        pollen.colorList.pop(index)
+                    elif (self.color in pollen.colorList) and (self.color not in pollen.beeColor) and (self.color not in pollen.helperBeeColor):
+                        index2 = len(pollen.helperBeeColor2) - pollen.helperBeeColor2[::-1].index(self.color) - 1
+                        
+                        pollen.helperBeeColor2.pop(index2)
                         pollen.colorList.pop(index)
 
-                        pollen.beeColor.pop(index2)
                     self.alreadyPollinated = True
                     self.pollinated = True
                 
@@ -474,7 +661,33 @@ class UnpoFlow:
                 
                 return False
             
+    def pollination3(self, helperBee2,pollen):
+        #a pollen list color or a bee list color
+        for color in pollen.colorList:
+            if color == self.color:
                 
+                index = pollen.colorList.index(self.color)
+                
+        
+                if (((self.x - helperBee2.x)**2 + (self.y - helperBee2.y)**2)**0.5 < self.r+5) and self.alreadyPollinated == False:
+                    
+                    if (self.color in pollen.colorList) and (self.color not in pollen.helperBeeColor):
+                        index3 = pollen.beeColor.index(self.color)
+                        pollen.beeColor.pop(index3)
+                        pollen.colorList.pop(index)
+                        
+                    else:
+                        
+                        index2 = len(pollen.helperBeeColor2) - pollen.helperBeeColor2[::-1].index(self.color) - 1
+                        pollen.colorList.pop(index)
+                        pollen.helperBeeColor2.pop(index2)
+                    self.alreadyPollinated = True
+                    self.pollinated = True
+                
+                    return True
+                
+                return False
+                       
             
         
         
@@ -489,9 +702,10 @@ class Pollen:
         self.needToDrawByHelper = False
         self.alreadyPop = False
         self.helperBeeColor = []
+        self.helperBeeColor2 = []
 
 
-    def draw(self,bee,orbs,helperBee):
+    def draw(self,bee,orbs,helperBee, helperBee2):
         
             
         for orb in orbs:
@@ -553,6 +767,36 @@ class Pollen:
 
                 if j > 2:
                     self.helperBeeColor.pop(0)
+
+        for orb in orbs:
+            if orb.needToDrawByHelper2 == True and orb.needToDrawAgain == False:
+                #color = random.choice(['red', 'yellow', 'blue'])
+                self.colorList.append(orb.color)
+                self.helperBeeColor2.append(orb.color)
+                
+                self.counter += 1
+                orb.needToDraw = False
+                orb.needToDrawAgain = True
+                self.needToDraw = True
+            
+            
+            for i in range(len(self.colorList)):
+                
+                if i <=5:
+                    drawCircle(100+20*i, 50, 20, fill = self.colorList[i], opacity = 75)   
+
+                if i > 5:
+                    self.colorList.pop(0)
+            
+            for j in range(len(self.helperBeeColor2)):
+                
+                if j <=2:
+                    
+                    drawCircle(helperBee2.x-18+10*j, helperBee2.y+25, self.r//2, fill = self.helperBeeColor2[j], opacity = 75)
+                
+
+                if j > 2:
+                    self.helperBeeColor2.pop(0)
             
 
         
@@ -566,6 +810,7 @@ def game_restart(app):
     app.stepsPerSecond = 40
     app.bee = Bee()
     app.helperBee = helperBee(app)
+    app.helperBee2 = helperBee2(app)
     app.unpolls = []
     app.orbs = []
     app.pollinatedOrbs = []
@@ -577,8 +822,10 @@ def game_restart(app):
     app.pollinated = False
     app.pollinated1 = False
     app.helperShow = False
+    app.helperShow2 = False
     app.needToDraw = False
     app.needToDrawByHelper = False
+    app.needToDrawByHelper2 = False
     app.pollen = Pollen()
     app.mousePosX = 100
     app.mousePosY = 100
@@ -600,6 +847,8 @@ def game_takeStep(app):
         app.bee.doStep(app)
     if app.helperShow == True:
         app.helperBee.doStep(app)
+    if app.helperShow2 == True:
+        app.helperBee2.doStep(app)
     i = 0
 
     #Update the orbs
@@ -641,10 +890,21 @@ def game_takeStep(app):
                 app.pollinated1 = True
             app.pollinateCount += totalCount
             #app.orbPollinated = True
-            
+        
+        if orb.pollination(app.helperBee2):
+            # app.pollinateCount += 0.05
+            # totalCount = int(app.pollinateCount//1)
+            orb.pollinateCount += 0.5
+            totalCount = int(orb.pollinateCount//1)
+            if totalCount >=1:
+                totalCount = 1
+                orb.needToDrawByHelper2 = True
+                app.pollinated1 = True
+            app.pollinateCount += totalCount
+            #app.orbPollinated = True
             
 
-        if app.bee.isColliding(app.orbs,app) or app.helperBee.isColliding(app.orbs, app):
+        if app.bee.isColliding(app.orbs,app) or app.helperBee.isColliding(app.orbs, app) or app.helperBee2.isColliding(app.orbs, app):
             app.pollinated = True
             
             
@@ -679,7 +939,9 @@ def game_takeStep(app):
                 
             unpoll.needToDrawByHelper = True
             
-            
+        if unpoll.pollination(app.helperBee2,app.pollen):
+                
+            unpoll.needToDrawByHelper2 = True 
             
         
         else:
@@ -712,6 +974,9 @@ def game_onKeyPress(app, key):
         app.paused = not app.paused
     elif key == 'h':
         app.helperShow = True
+    elif key =='j':
+        app.helperShow2 = True
+
     
 
 def game_redrawAll(app):
@@ -746,7 +1011,10 @@ def game_redrawAll(app):
     if app.helperShow == True:
         app.helperBee.draw(app)
 
-    app.pollen.draw(app.bee,app.orbs,app.helperBee)
+    if app.helperShow2 == True:
+        app.helperBee2.draw(app)
+
+    app.pollen.draw(app.bee,app.orbs,app.helperBee, app.helperBee2)
 
     #Call each orb's draw method
     for orb in app.orbs:
