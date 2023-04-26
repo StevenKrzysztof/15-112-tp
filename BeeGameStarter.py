@@ -433,6 +433,8 @@ class UnpoFlow:
                     
                     if (self.color in pollen.colorList) and (self.color not in pollen.beeColor):
                         pollen.colorList.pop(index)
+                        index3 = pollen.helperBeeColor.index(self.color)
+                        pollen.helperBeeColor.pop(index3)
                     else:
                         
                         index2 = len(pollen.beeColor) - pollen.beeColor[::-1].index(self.color) - 1
@@ -456,9 +458,11 @@ class UnpoFlow:
                 if (((self.x - helperBee.x)**2 + (self.y - helperBee.y)**2)**0.5 < self.r+5) and self.alreadyPollinated == False:
                     
                     if (self.color in pollen.colorList) and (self.color not in pollen.helperBeeColor):
+                        index3 = pollen.beeColor.index(self.color)
+                        pollen.beeColor.pop(index3)
                         pollen.colorList.pop(index)
                         
-                    elif (self.color in pollen.colorList) and (self.color in pollen.helperBeeColor):
+                    else:
                         
                         index2 = len(pollen.helperBeeColor) - pollen.helperBeeColor[::-1].index(self.color) - 1
                         pollen.colorList.pop(index)
