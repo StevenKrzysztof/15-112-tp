@@ -115,21 +115,25 @@ class helperBee:
         #Load the bee gif
         myGif = Image.open('./bee2.gif')
         self.spriteList = []
+        self.spriteListTrans = []
         for frame in range(myGif.n_frames):  #For every frame index...
             #Seek to the frame, convert it, add it to our sprite list
             myGif.seek(frame)
             fr = myGif.resize((myGif.size[0]//10, myGif.size[1]//10))
-            fr = fr.transpose(Image.FLIP_LEFT_RIGHT)
+            fr2 = fr.transpose(Image.FLIP_LEFT_RIGHT)
             fr = CMUImage(fr)
+            fr2 = CMUImage(fr2)
             self.spriteList.append(fr)
+            self.spriteListTrans.append(fr2)
 
         ##Fix for broken transparency on frame 0
         self.spriteList.pop(0)
+       
 
         #Set sprite counters
         self.stepCounter = 0
         self.spriteCounter = 0
-
+        self.spriteListTrans.pop(0)
         #Set initial position, velocity, acceleration
         self.x, self.y = app.width//2,app.height//2
         self.dy = random.randrange(-5,5)
@@ -139,14 +143,10 @@ class helperBee:
         self.speed = 0
         self.targetOrb = None
         self.closestOrb = None
+        self.turn = False
     
         
-    def draw(self,app):
-        #Draw current bee sprite
-        drawImage(self.spriteList[self.spriteCounter], 
-                  self.x, self.y, align = 'center')
-        if app.pollinated1 != False:
-            drawCircle(self.x-18, self.y+45, 12, fill = 'orange', opacity = 75)
+    
         
     def doStep(self, app):
         if self.closestOrb is None:
@@ -177,6 +177,10 @@ class helperBee:
             # Move towards target orb
             dx = self.closestOrb.x - self.x
             dy = self.closestOrb.y - self.y
+            if dx>=0:
+                self.turn = True
+            else:
+                self.turn = False
             
             distance = (dx ** 2 + dy ** 2) ** 0.5
             if distance > 0:
@@ -214,7 +218,16 @@ class helperBee:
 
         #Update position and velocity
     
-
+    def draw(self,app):
+            #Draw current bee sprite
+            if self.turn:
+                drawImage(self.spriteList[self.spriteCounter], 
+                        self.x, self.y, align = 'center')
+            else:
+                drawImage(self.spriteListTrans[self.spriteCounter], 
+                        self.x, self.y, align = 'center')
+            if app.pollinated1 != False:
+                drawCircle(self.x-18, self.y+45, 12, fill = 'orange', opacity = 75)
 
 
     def isColliding(self, orbs,app):
@@ -393,9 +406,10 @@ class Pollen:
         self.beeColor = []
         self.needToDraw = False
         self.alreadyPop = False
+        self.helperBeeColor = []
 
 
-    def draw(self,bee,orbs):
+    def draw(self,bee,orbs,helperBee):
         
             
         for orb in orbs:
@@ -403,6 +417,7 @@ class Pollen:
                 #color = random.choice(['red', 'yellow', 'blue'])
                 self.colorList.append(orb.color)
                 self.beeColor.append(orb.color)
+                self.helperBeeColor.append(orb.color)
                 
                 self.counter += 1
                 orb.needToDraw = False
@@ -422,6 +437,7 @@ class Pollen:
                 
                 if j <=2:
                     drawCircle(bee.x-18+10*j, bee.y+45, self.r, fill = self.beeColor[j], opacity = 75)
+                    drawCircle(helperBee.x-18+10*j, helperBee.y+25, self.r//2, fill = self.beeColor[j], opacity = 75)
                 
 
                 if j > 2:
@@ -620,7 +636,7 @@ def game_redrawAll(app):
     if app.helperShow == True:
         app.helperBee.draw(app)
 
-    app.pollen.draw(app.bee,app.orbs)
+    app.pollen.draw(app.bee,app.orbs,app.helperBee)
 
     #Call each orb's draw method
     for orb in app.orbs:
