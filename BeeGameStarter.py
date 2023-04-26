@@ -149,108 +149,108 @@ class helperBee:
     
         
     def doStep(self, app):
-        # if len(app.pollen.colorList) <6:
-        if self.closestOrb is None:
-            # Find nearest unpollinated orb
-            minDist = float('inf')
-            self.closestOrb = None
-            
-            for orb in app.orbs:
-                if orb.needToDrawByHelper == False and orb.needToDraw == False:
-                    dist = ((self.x - orb.x) ** 2 + (self.y - orb.y) ** 2) ** 0.5
-                    if dist < minDist:
-                        minDist = dist
-                        self.closestOrb = orb
-                        dx = self.closestOrb.x - self.x
-                        dy = self.closestOrb.y - self.y
-
-                        self.x += 0
-                        self.y += 0
-                            
-
-                
-            # Move randomly
-            
-                        
-                
-
-        elif self.closestOrb != None:
-            # Move towards target orb
-            dx = self.closestOrb.x - self.x
-            dy = self.closestOrb.y - self.y
-            if dx>=0:
-                self.turn = True
-            else:
-                self.turn = False
-            
-            distance = (dx ** 2 + dy ** 2) ** 0.5
-            if distance > 0:
-                dx /= distance
-                dy /= distance
-                self.x += dx*self.speed
-                self.y += dy*self.speed
-            if self.closestOrb.needToDraw == True or self.closestOrb.needToDrawByHelper == True:
+        if len(app.pollen.colorList) <6:
+            if self.closestOrb is None:
+                # Find nearest unpollinated orb
+                minDist = float('inf')
                 self.closestOrb = None
-                # self.x, self.y = app.width//2,app.height//2
-            elif self.closestOrb.y + self.closestOrb.r >= app.height:
-                self.closestOrb = None
-            elif self.closestOrb.x + self.closestOrb.r >= app.width or self.closestOrb.x - self.closestOrb.r <= 0:
-                self.closestOrb = None
-            # Limit the bee's speed to a maximum of 5
-            self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
-            if self.speed > 10:
-                self.speed = 10
-        # else: 
-        #     if self.closestUnpoll is None:
-        #         # Find nearest unpollinated orb
-        #         minDist = float('inf')
-        #         self.closestUnpoll = None
                 
-        #         for unpoll in app.unpolls:
-        #             if unpoll.needToDrawByHelper == False and unpoll.needToDraw == False:
-        #                 dist = ((self.x - unpoll.x) ** 2 + (self.y - unpoll.y) ** 2) ** 0.5
-        #                 if dist < minDist:
-        #                     minDist = dist
-        #                     self.closestUnpoll = unpoll
-        #                     dx = self.closestUnpoll.x - self.x
-        #                     dy = self.closestUnpoll.y - self.y
+                for orb in app.orbs:
+                    if orb.needToDrawByHelper == False and orb.needToDraw == False:
+                        dist = ((self.x - orb.x) ** 2 + (self.y - orb.y) ** 2) ** 0.5
+                        if dist < minDist:
+                            minDist = dist
+                            self.closestOrb = orb
+                            dx = self.closestOrb.x - self.x
+                            dy = self.closestOrb.y - self.y
 
-        #                     self.x += 0
-        #                     self.y += 0
+                            self.x += 0
+                            self.y += 0
                                 
 
                     
-        #         # Move randomly
+                # Move randomly
                 
                             
                     
 
-        #     elif self.closestUnpoll != None:
-        #         # Move towards target orb
-        #         dx = self.closestUnpoll.x - self.x
-        #         dy = self.closestUnpoll.y - self.y
-        #         if dx>=0:
-        #             self.turn = True
-        #         else:
-        #             self.turn = False
+            elif self.closestOrb != None:
+                # Move towards target orb
+                dx = self.closestOrb.x - self.x
+                dy = self.closestOrb.y - self.y
+                if dx>=0:
+                    self.turn = True
+                else:
+                    self.turn = False
                 
-        #         distance = (dx ** 2 + dy ** 2) ** 0.5
-        #         if distance > 0:
-        #             dx /= distance
-        #             dy /= distance
-        #             self.x += dx*self.speed
-        #             self.y += dy*self.speed
-        #         if self.closestUnpoll.needToDraw == True or self.closestUnpoll.needToDrawByHelper == True:
-        #             self.closestUnpoll = None
-        #             # self.x, self.y = app.width//2,app.height//2
-        #         elif self.closestUnpoll.y + self.closestUnpoll.r >= app.height:
-        #             self.closestUnpoll = None
-        #         elif self.closestUnpoll.x + self.closestUnpoll.r >= app.width or self.closestUnpoll.x - self.closestUnpoll.r <= 0:
-        #             self.closestUnpoll = None
-        #         # Limit the bee's speed to a maximum of 5
-        #         self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
-        #         if self.speed > 10:
-        #             self.speed = 10
+                distance = (dx ** 2 + dy ** 2) ** 0.5
+                if distance > 0:
+                    dx /= distance
+                    dy /= distance
+                    self.x += dx*self.speed
+                    self.y += dy*self.speed
+                if self.closestOrb.needToDraw == True or self.closestOrb.needToDrawByHelper == True:
+                    self.closestOrb = None
+                    # self.x, self.y = app.width//2,app.height//2
+                elif self.closestOrb.y + self.closestOrb.r >= app.height:
+                    self.closestOrb = None
+                elif self.closestOrb.x + self.closestOrb.r >= app.width or self.closestOrb.x - self.closestOrb.r <= 0:
+                    self.closestOrb = None
+                # Limit the bee's speed to a maximum of 5
+                self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
+                if self.speed > 10:
+                    self.speed = 10
+        else: 
+            if self.closestUnpoll is None:
+                # Find nearest unpollinated orb
+                minDist = float('inf')
+                self.closestUnpoll = None
+                
+                for unpoll in app.unpolls:
+                    if unpoll.needToDrawByHelper == False and unpoll.needToDraw == False:
+                        dist = ((self.x - unpoll.x) ** 2 + (self.y - unpoll.y) ** 2) ** 0.5
+                        # if dist < minDist:
+                        #     minDist = dist
+                        self.closestUnpoll = unpoll
+                        dx = self.closestUnpoll.x - self.x
+                        dy = self.closestUnpoll.y - self.y
+
+                        self.x += 0
+                        self.y += 0
+                                
+
+                    
+                # Move randomly
+                
+                            
+                    
+
+            elif self.closestUnpoll != None and self.closestUnpoll.color in app.pollen.colorList:
+                # Move towards target orb
+                dx = self.closestUnpoll.x - self.x
+                dy = self.closestUnpoll.y - self.y
+                if dx>=0:
+                    self.turn = True
+                else:
+                    self.turn = False
+                
+                distance = (dx ** 2 + dy ** 2) ** 0.5
+                if distance > 0:
+                    dx /= distance
+                    dy /= distance
+                    self.x += dx*self.speed
+                    self.y += dy*self.speed
+                if self.closestUnpoll.needToDraw == True or self.closestUnpoll.needToDrawByHelper == True:
+                    self.closestUnpoll = None
+                    # self.x, self.y = app.width//2,app.height//2
+                elif self.closestUnpoll.y + self.closestUnpoll.r >= app.height:
+                    self.closestUnpoll = None
+                elif self.closestUnpoll.x + self.closestUnpoll.r >= app.width or self.closestUnpoll.x - self.closestUnpoll.r <= 0:
+                    self.closestUnpoll = None
+                # Limit the bee's speed to a maximum of 5
+                self.speed = (self.dx ** 2 + self.dy ** 2) ** 0.5
+                if self.speed > 10:
+                    self.speed = 10
 
 
        
